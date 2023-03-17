@@ -9,6 +9,18 @@ import scipy.io
 import matplotlib.pyplot as plt
 import seaborn as sns
 
+def loss_function(
+    x : np.ndarray,
+    q : np.ndarray,
+    P : np.ndarray
+) -> float:
+    '''
+    '''
+    term_one = 0.5 * np.dot(np.dot(x.T, P), x)
+    term_two = np.dot(q.T, x)
+    _loss = term_one + term_two
+    return _loss
+
 def admm_algorithm(
     _lambda : float,
     _rho : float,
@@ -18,7 +30,7 @@ def admm_algorithm(
     P : np.ndarray,
     max_iterations : int = 100,
     _epsilon : float = 1e-10
-) -> tuple[float]:
+) -> tuple[float, np.ndarray, np.ndarray]:
     '''
     Implements the Alternating Direction Method of Multipliers (ADMM) algorithm to solve the convex optimization problem:
     
@@ -51,6 +63,9 @@ def admm_algorithm(
     --------
     A tuple containing the solution to the optimization problem in the form of a (n x 1) numpy array.
     '''
+    loss_function_values = []
+    norm_values = []
+
     x = np.zeros((P.shape[0], 1))
     z = np.zeros((P.shape[0], 1))
 
@@ -69,11 +84,19 @@ def admm_algorithm(
         
         w += x - z
 
-        stopping_condition = np.linalg.norm(x - z)
-        if stopping_condition < _epsilon:
-            break
+        loss_function_values.append(loss_function(x, q, P))
 
-    return (x)
+        stopping_condition = np.linalg.norm(x - z)
+        norm_values.append(stopping_condition)
+        
+        if stopping_condition < _epsilon:
+            loss_function_values = np.array(loss_function_values)
+            norm_values = np.array(norm_values)
+            return (x, loss_function_values, norm_values)
+
+    loss_function_values = np.array(loss_function_values)
+    norm_values = np.array(norm_values)
+    return (x, loss_function_values, norm_values)
 
 if __name__ == '__main__':
     current_path = os.path.abspath(__file__)
@@ -88,6 +111,58 @@ if __name__ == '__main__':
     _lambda = 0.5
     _rho = 1.1
 
-    x = admm_algorithm(_lambda, _rho, a, b, q, P)
+    x, loss_function_values, norm_values = admm_algorithm(_lambda, _rho, a, b, q, P)
 
-    # print(x)
+    # =================
+    # Plotting: Plot 1
+    # =================
+    iterations = np.arange(len(loss_function_values.flatten()))
+
+    ax = sns.lineplot(x = iterations, y = loss_function_values.flatten())
+
+    plt.xlabel('Iteration')
+    plt.ylabel('Loss Function')
+    plt.title('Loss per Iteration')
+    
+    output_filepath = os.path.abspath(os.path.join(current_path, '..', '..', 'output', 'Problem1', 'loss_function_values_per_iteration.png'))
+    plt.savefig(output_filepath)
+
+    plt.clf()
+    plt.cla()
+    # =================
+
+    # =================
+    # Plotting: Plot 2
+    # =================
+    iterations = np.arange(len(norm_values.flatten()))
+
+    ax = sns.lineplot(x = iterations, y = norm_values.flatten())
+
+    plt.xlabel('Iteration')
+    plt.ylabel('L2-Norm Values (x - z)')
+    plt.title('L2-Norm Values (x - z) per Iteration')
+    
+    output_filepath = os.path.abspath(os.path.join(current_path, '..', '..', 'output', 'Problem1', 'l2_norm_values_per_iteration.png'))
+    plt.savefig(output_filepath)
+
+    plt.clf()
+    plt.cla()
+    # =================
+
+    # =================
+    # Plotting: Plot 3
+    # =================
+    indices = np.arange(len(x.flatten()))
+
+    plt.stem(indices, x.flatten(), linefmt = 'blue', markerfmt = 'bo', use_line_collection = True)
+
+    plt.xlabel('Index')
+    plt.ylabel('X-Values')
+    plt.title('X-Values per Index')
+    
+    output_filepath = os.path.abspath(os.path.join(current_path, '..', '..', 'output', 'Problem1', 'x_values_per_index.png'))
+    plt.savefig(output_filepath)
+
+    plt.clf()
+    plt.cla()
+    # =================
