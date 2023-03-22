@@ -17,6 +17,16 @@ def loss_function(
     _loss = 0.5 * np.linalg.norm(y - X @ w)**2
     return _loss
 
+def sum_of_absolute_errors(
+    y : np.ndarray,
+    X : np.ndarray,
+    w : np.ndarray
+) -> float:
+    '''
+    '''
+    _sae = np.sum(np.abs(y - X @ w))
+    return _sae
+
 def coordinate_descent_part_1(
     y : np.ndarray,
     X : np.ndarray,
@@ -62,7 +72,7 @@ if __name__ == '__main__':
     _lambda = 0.1
     max_iteration = 300
 
-    w, loss_values = coordinate_descent_part_1(y, X, _lambda, max_iteration)
+    w, loss_values = coordinate_descent_part_1(y[:2000], X[:2000, :], _lambda, max_iteration)
 
     # =================
     # Plotting: Plot 1
@@ -81,3 +91,6 @@ if __name__ == '__main__':
     plt.clf()
     plt.cla()
     # =================
+
+    _sae = sum_of_absolute_errors(y[2000:], X[2000:, :], w)
+    print(_sae)
