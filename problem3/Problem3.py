@@ -26,6 +26,18 @@ def predict_labels(
     predicted_labels = predicted_labels.astype(bool)
     return ~predicted_labels
 
+def get_accuracy(
+    x : np.ndarray,
+    y : np.ndarray,
+    theta : np.ndarray
+) -> float:
+    '''
+    '''
+    y_pred = predict_labels(x, theta)
+    matches = np.sum(y_pred == y.astype(bool))
+    accuracy = matches / len(y_pred) * 100
+    return accuracy
+
 def objective_function(
     x : np.ndarray,
     y : np.ndarray,
@@ -75,10 +87,11 @@ def proximal_gradient_descent(
     lambda_2 : float,
     t : float = 1e-3,
     max_iterations : int = 300
-) -> tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     '''
     '''
     loss_values = []
+    accuracy_values = []
 
     mu, sigma = 0, 0.2
     theta_k = np.random.normal(mu, sigma, size=(1, x.shape[1]))
@@ -97,9 +110,11 @@ def proximal_gradient_descent(
 
         t *= 0.97
         loss_values.append(objective_function(x, y, lambda_1, lambda_2, theta_k))
+        accuracy_values.append(get_accuracy(x, y, theta_k))
     
     loss_values = np.array(loss_values)
-    return (theta_k, loss_values)
+    accuracy_values = np.array(accuracy_values)
+    return (theta_k, loss_values, accuracy_values)
 
 if __name__ == '__main__':
     np.random.seed(1234)
@@ -116,7 +131,7 @@ if __name__ == '__main__':
     lambda_1 = 10
     lambda_2 = 5
 
-    learned_theta, loss_values = proximal_gradient_descent(X_train, y_train, lambda_1, lambda_2)
+    learned_theta, loss_values, accuracy_values = proximal_gradient_descent(X_train, y_train, lambda_1, lambda_2)
 
     # =================
     # Plotting: Plot 1
@@ -130,7 +145,7 @@ if __name__ == '__main__':
     plt.ylabel('Loss Values')
     plt.title('Loss Values per Iteration')
     
-    output_filepath = os.path.abspath(os.path.join(current_path, '..', '..', 'output', 'Problem3', 'part_1_loss_values_per_iteration.png'))
+    output_filepath = os.path.abspath(os.path.join(current_path, '..', '..', 'output', 'Problem3', 'part_2_loss_values_per_iteration.png'))
     plt.savefig(output_filepath)
 
     plt.clf()
@@ -144,5 +159,34 @@ if __name__ == '__main__':
 
     l0_norm = np.count_nonzero(learned_theta)
 
-    print(accuracy)
-    print(l0_norm)
+    print(fr'''
+
+    The accuracy for the test set is:
+    {accuracy}
+
+    ''')
+
+    print(fr'''
+
+    The L0-norm for theta is:
+    {l0_norm}
+
+    ''')
+
+    # =================
+    # Plotting: Plot 2
+    # =================
+    iterations = np.arange(accuracy_values.shape[0])
+
+    ax = sns.lineplot(x = iterations, y = accuracy_values)
+
+    plt.xlabel('Iteration')
+    plt.ylabel('Accuracy Values')
+    plt.title('Training Set Accuracy Values per Iteration')
+    
+    output_filepath = os.path.abspath(os.path.join(current_path, '..', '..', 'output', 'Problem3', 'part_2_accuracy_values_per_iteration.png'))
+    plt.savefig(output_filepath)
+
+    plt.clf()
+    plt.cla()
+    # =================
